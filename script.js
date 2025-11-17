@@ -1,55 +1,46 @@
-// Carrega dados do localStorage ao iniciar
+
 let alunos = JSON.parse(localStorage.getItem("alunos")) || [];
 
 const tabela = document.getElementById("tabela-corpo");
 const form = document.getElementById("formulario");
 
-// Atualiza a tabela quando a página abre
+let alunoEditando = null;
+
+// Renderiza tabela ao carregar
 renderizarTabela();
 
-form.addEventListener("submit", function(e) {
+form.addEventListener("submit", function (e) {
     e.preventDefault();
 
-    let nome = document.getElementById("nome").value;
-    let n1 = Number(document.getElementById("nota1").value);
-    let n2 = Number(document.getElementById("nota2").value);
+    const nome = document.getElementById("nome").value;
+    const n1 = Number(document.getElementById("nota1").value);
+    const n2 = Number(document.getElementById("nota2").value);
 
     if (!nome || n1 === "" || n2 === "") {
         alert("Preencha todos os campos!");
         return;
     }
 
-    // Calcula média
-    let media = (n1 + n2) / 2;
-    let status = media >= 6 ? "Aprovado" : "Reprovado";
+    const media = (n1 + n2) / 2;
+    const status = media >= 6 ? "Aprovado" : "Reprovado";
 
-    // Cria objeto aluno
-    let aluno = {
-        nome: nome,
+    alunos.push({
+        nome,
         nota1: n1,
         nota2: n2,
         media: media.toFixed(2),
-        status: status
-    };
+        status
+    });
 
-    // Salva na lista
-    alunos.push(aluno);
-
-    // Salva no localStorage
-    localStorage.setItem("alunos", JSON.stringify(alunos));
-
-    // Atualiza tabela
+    salvar();
     renderizarTabela();
-
-    // Limpa campos
     form.reset();
 });
 
-// Função que exibe todos os alunos na tabela
 function renderizarTabela() {
     tabela.innerHTML = "";
 
-    alunos.forEach(aluno => {
+    alunos.forEach((aluno, index) => {
         let tr = document.createElement("tr");
 
         tr.innerHTML = `
@@ -57,11 +48,47 @@ function renderizarTabela() {
             <td>${aluno.nota1}</td>
             <td>${aluno.nota2}</td>
             <td>${aluno.media}</td>
-            <td class="${aluno.status === 'Aprovado' ? 'aprovado' : 'reprovado'}">
-                ${aluno.status}
-            </td>
+            <td class="${aluno.status === "Aprovado" ? "aprovado" : "reprovado"}">${aluno.status}</td>
+            <td><button class="btn-edit" onclick="editarAluno(${index})">Editar</button></td>
         `;
 
         tabela.appendChild(tr);
     });
 }
+
+function salvar() {
+    localStorage.setItem("alunos", JSON.stringify(alunos));
+}
+
+/* ===== EDIÇÃO ===== */
+
+function editarAluno(index) {
+    alunoEditando = index;
+
+    document.getElementById("editNota1").value = alunos[index].nota1;
+    document.getElementById("editNota2").value = alunos[index].nota2;
+
+    document.getElementById("modal").style.display = "flex";
+}
+
+document.getElementById("cancelarEdicao").onclick = () => {
+    document.getElementById("modal").style.display = "none";
+};
+
+document.getElementById("salvarEdicao").onclick = () => {
+    const n1 = Number(document.getElementById("editNota1").value);
+    const n2 = Number(document.getElementById("editNota2").value);
+
+    const media = (n1 + n2) / 2;
+    const status = media >= 6 ? "Aprovado" : "Reprovado";
+
+    alunos[alunoEditando].nota1 = n1;
+    alunos[alunoEditando].nota2 = n2;
+    alunos[alunoEditando].media = media.toFixed(2);
+    alunos[alunoEditando].status = status;
+
+    salvar();
+    renderizarTabela();
+
+    document.getElementById("modal").style.display = "none";
+};
